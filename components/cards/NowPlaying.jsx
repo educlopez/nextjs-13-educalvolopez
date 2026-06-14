@@ -75,7 +75,7 @@ Song.Play = function SongPlay({ songUrl }) {
 Song.Title = function SongTitle({ title, songUrl, className }) {
   return (
     <Link
-      href={songUrl}
+      href={songUrl || '#'}
       className="font-semibold capsize max-w-max body-primary line-clamp-1"
     >
       {title}
@@ -109,17 +109,19 @@ export function SpotifyPlayer({ className }) {
 
   if (currentlyPlaying.isError || lastPlayed.isError) return null
 
+  const isLoading = currentlyPlaying.isLoading || lastPlayed.isLoading
+  const song = currentlyPlaying.song?.isPlaying
+    ? currentlyPlaying.song
+    : lastPlayed.song
+
+  // Without the Spotify env vars the API returns an empty object, which would
+  // render <Link href={undefined}> and crash Next's URL formatter. Bail out
+  // unless we actually have a playable song.
+  if (!isLoading && !song?.songUrl) return null
+
   return (
     <div className={cn(className, 'rounded-2xl box-gen flex p-4')}>
-      {currentlyPlaying.isLoading ? (
-        <Song.Skeleton />
-      ) : currentlyPlaying.song?.isPlaying ? (
-        <Song {...currentlyPlaying.song} />
-      ) : lastPlayed.isLoading ? (
-        <Song.Skeleton />
-      ) : (
-        <Song {...lastPlayed.song} />
-      )}
+      {isLoading ? <Song.Skeleton /> : <Song {...song} />}
     </div>
   )
 }
